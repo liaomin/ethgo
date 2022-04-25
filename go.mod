@@ -1,4 +1,4 @@
-module github.com/liaom/ethgo
+module github.com/umbracle/ethgo
 
 go 1.12
 
