@@ -213,12 +213,13 @@ func decodeArraySlice(t *Type, data []byte, size int) (interface{}, []byte, erro
 		return nil, nil, fmt.Errorf("size is too big")
 	}
 
-	var res reflect.Value
-	if t.kind == KindSlice {
-		res = reflect.MakeSlice(t.t, size, size)
-	} else if t.kind == KindArray {
-		res = reflect.New(t.t).Elem()
-	}
+	var res []interface{}
+	// var res reflect.Value
+	// if t.kind == KindSlice {
+	// 	res = reflect.MakeSlice(t.t, size, size)
+	// } else if t.kind == KindArray {
+	// 	res = reflect.New(t.t).Elem()
+	// }
 
 	orig := data
 	origLen := len(orig)
@@ -244,9 +245,11 @@ func decodeArraySlice(t *Type, data []byte, size int) (interface{}, []byte, erro
 		} else {
 			data = data[32:]
 		}
-		res.Index(indx).Set(reflect.ValueOf(val))
+		res = append(res, val)
+		// res.Index(indx).Set(reflect.ValueOf(val))
 	}
-	return res.Interface(), data, nil
+	// return res.Interface(), data, nil
+	return res, data, nil
 }
 
 func decodeBool(data []byte) (interface{}, error) {
