@@ -19,6 +19,7 @@ type ABI struct {
 	Constructor        *Method
 	Methods            map[string]*Method
 	MethodsBySignature map[string]*Method
+	MethodsById        map[string]*Method
 	Events             map[string]*Event
 	Errors             map[string]*Error
 }
@@ -26,6 +27,24 @@ type ABI struct {
 func (a *ABI) GetMethod(name string) *Method {
 	m := a.Methods[name]
 	return m
+}
+
+func (a *ABI) DecodeParams(data []byte) (map[string]interface{}, error) {
+	if len(data) < 4 {
+		return nil, fmt.Errorf("data length must large than 4")
+	}
+	id := string(data[:4])
+	m := a.MethodsById[id]
+	if m == nil {
+		return nil, fmt.Errorf("not found method by id : %s", id)
+	}
+	data = data[4:]
+	respInterface, err := m.Inputs.Decode(data)
+	if err != nil {
+		return nil, err
+	}
+	resp := respInterface.(map[string]interface{})
+	return resp, nil
 }
 
 func (a *ABI) GetMethodBySignature(methodSignature string) *Method {
@@ -58,12 +77,16 @@ func (a *ABI) addMethod(m *Method) {
 	if len(a.MethodsBySignature) == 0 {
 		a.MethodsBySignature = map[string]*Method{}
 	}
+	if len(a.MethodsById) == 0 {
+		a.MethodsById = map[string]*Method{}
+	}
 	name := overloadedName(m.Name, func(s string) bool {
 		_, ok := a.Methods[s]
 		return ok
 	})
 	a.Methods[name] = m
 	a.MethodsBySignature[m.Sig()] = m
+	a.MethodsById[string(m.ID())] = m
 }
 
 func overloadedName(rawName string, isAvail func(string) bool) string {
