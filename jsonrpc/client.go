@@ -1,6 +1,8 @@
 package jsonrpc
 
 import (
+	"sync"
+
 	"github.com/umbracle/ethgo/jsonrpc/transport"
 )
 
@@ -31,6 +33,35 @@ func WithHeaders(headers map[string]string) ConfigOption {
 	}
 }
 
+type ClientPool struct {
+	addr string
+	opts []ConfigOption
+	pool sync.Pool
+}
+
+func NewClientPool(addr string, opts ...ConfigOption) *ClientPool {
+	pool := &ClientPool{addr: addr, opts: opts, pool: sync.Pool{
+		New: func() interface{} {
+			for true {
+				client, _ := NewClient(addr, opts...)
+				if client != nil {
+					return client
+				}
+			}
+			return nil
+		},
+	}}
+	return pool
+}
+
+func (cp *ClientPool) Require() *Client {
+	return cp.pool.Get().(*Client)
+}
+
+func (cp *ClientPool) Release(c *Client) {
+	cp.pool.Put(c)
+}
+
 func NewClient(addr string, opts ...ConfigOption) (*Client, error) {
 	config := &Config{headers: map[string]string{}}
 	for _, opt := range opts {
@@ -39,7 +70,7 @@ func NewClient(addr string, opts ...ConfigOption) (*Client, error) {
 
 	c := &Client{}
 	c.endpoints.w = &Web3{c}
-	c.endpoints.e = &Eth{c}
+	c.endpoints.e = &Eth{c: c}
 	c.endpoints.n = &Net{c}
 	c.endpoints.d = &Debug{c}
 

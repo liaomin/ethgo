@@ -311,9 +311,20 @@ func (a *Contract) Call(method string, block ethgo.BlockNumber, args ...interfac
 	if err != nil {
 		return nil, err
 	}
+	return a.CallByMathodAndData(m, block, data)
+}
 
+func (a *Contract) CallByData(method string, block ethgo.BlockNumber, data []byte) (map[string]interface{}, error) {
+	m := a.abi.GetMethod(method)
+	return a.CallByMathodAndData(m, block, data)
+}
+
+func (a *Contract) CallByMathodAndData(m *abi.Method, block ethgo.BlockNumber, data []byte) (map[string]interface{}, error) {
+	if m == nil {
+		return nil, fmt.Errorf("method not found")
+	}
 	opts := &CallOpts{
-		Block: ethgo.Latest,
+		Block: block,
 	}
 	if a.key != nil {
 		opts.From = a.key.Address()
@@ -328,4 +339,49 @@ func (a *Contract) Call(method string, block ethgo.BlockNumber, args ...interfac
 		return nil, err
 	}
 	return resp, nil
+}
+
+func (a *Contract) Send(method string, opts *TxnOpts, args ...interface{}) (*ethgo.Receipt, error) {
+	m := a.abi.GetMethod(method)
+	if m == nil {
+		return nil, fmt.Errorf("method not found")
+	}
+	var input []byte
+	var abiMethod *abi.Method = m
+	data, err := abi.Encode(args, abiMethod.Inputs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode arguments: %v", err)
+	}
+	input = append(abiMethod.ID(), data...)
+	return a.SendByMethodAndData(m, opts, input)
+}
+
+func (a *Contract) SendByData(method string, opts *TxnOpts, input []byte) (*ethgo.Receipt, error) {
+	m := a.abi.GetMethod(method)
+	if m == nil {
+		return nil, fmt.Errorf("method not found")
+	}
+	return a.SendByMethodAndData(m, opts, input)
+}
+
+func (a *Contract) SendByMethodAndData(m *abi.Method, opts *TxnOpts, input []byte) (*ethgo.Receipt, error) {
+	if m == nil {
+		return nil, fmt.Errorf("method not found")
+	}
+	if a.key == nil {
+		return nil, fmt.Errorf("no key selected")
+	}
+	options := opts
+	if options == nil {
+		options = &TxnOpts{}
+	}
+	txn, err := a.provider.Txn(a.addr, a.key, input, options)
+	if err != nil {
+		return nil, err
+	}
+	err = txn.Do()
+	if err != nil {
+		return nil, err
+	}
+	return txn.Wait()
 }

@@ -11,7 +11,8 @@ import (
 
 // Eth is the eth namespace
 type Eth struct {
-	c *Client
+	c       *Client
+	chainId *big.Int
 }
 
 // Eth returns the reference to the eth namespace
@@ -221,9 +222,14 @@ func (e *Eth) GetLogs(filter *ethgo.LogFilter) ([]*ethgo.Log, error) {
 
 // ChainID returns the id of the chain
 func (e *Eth) ChainID() (*big.Int, error) {
+	if e.chainId != nil {
+		return e.chainId, nil
+	}
 	var out string
 	if err := e.c.Call("eth_chainId", &out); err != nil {
 		return nil, err
 	}
-	return parseBigInt(out), nil
+	chainId := parseBigInt(out)
+	e.chainId = chainId
+	return chainId, nil
 }
