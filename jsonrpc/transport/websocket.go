@@ -242,12 +242,17 @@ func (s *stream) setSubscription(id string, callback func(b []byte)) {
 }
 
 // Subscribe implements the PubSubTransport interface
-func (s *stream) Subscribe(method interface{}, callback func(b []byte)) (func() error, error) {
+func (s *stream) Subscribe(method string, params interface{}, callback func(b []byte)) (func() error, error) {
 	var out string
-	if err := s.Call("eth_subscribe", &out, method); err != nil {
-		return nil, err
+	if params == nil {
+		if err := s.Call("eth_subscribe", &out, method); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := s.Call("eth_subscribe", &out, method, params); err != nil {
+			return nil, err
+		}
 	}
-
 	s.setSubscription(out, callback)
 	cancel := func() error {
 		return s.unsubscribe(out)
