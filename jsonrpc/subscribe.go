@@ -18,6 +18,7 @@ func (c *Client) SubscriptionEnabled() bool {
 func (c *Client) Subscribe(method string, parmas interface{}, callback func(b []byte)) (func() error, error) {
 	r := c.transportPool.Require()
 	defer c.transportPool.Release(r)
+
 	pub, ok := r.(transport.PubSubTransport)
 	if !ok {
 		return nil, fmt.Errorf("Transport does not support the subscribe method")
