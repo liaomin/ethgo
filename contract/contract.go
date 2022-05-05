@@ -244,6 +244,10 @@ type Contract struct {
 	key      ethgo.Key
 }
 
+func (a *Contract) GetProvider() Provider {
+	return a.provider
+}
+
 func (a *Contract) GetABI() *abi.ABI {
 	return a.abi
 }
