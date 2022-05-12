@@ -257,6 +257,7 @@ type TxnOpts struct {
 	GasPrice uint64
 	GasLimit uint64
 	Nonce    uint64
+	Key      ethgo.Key
 }
 
 func (a *Contract) Txn(method string, args ...interface{}) (Txn, error) {
@@ -372,14 +373,18 @@ func (a *Contract) SendByMethodAndData(m *abi.Method, opts *TxnOpts, input []byt
 	if m == nil {
 		return nil, fmt.Errorf("method not found")
 	}
-	if a.key == nil {
+	var key = opts.Key
+	if key == nil {
+		key = a.key
+	}
+	if key == nil {
 		return nil, fmt.Errorf("no key selected")
 	}
 	options := opts
 	if options == nil {
 		options = &TxnOpts{}
 	}
-	txn, err := a.provider.Txn(a.addr, a.key, input, options)
+	txn, err := a.provider.Txn(a.addr, key, input, options)
 	if err != nil {
 		return nil, err
 	}
