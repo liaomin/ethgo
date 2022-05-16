@@ -20,6 +20,12 @@ func (c *Client) Eth() *Eth {
 	return c.endpoints.e
 }
 
+func (e *Eth) GetNodeInfo() (string, error) {
+	var res string
+	err := e.c.Call("web3_clientVersion", &res)
+	return res, err
+}
+
 // GetCode returns the code of a contract
 func (e *Eth) GetCode(addr ethgo.Address, block ethgo.BlockNumberOrHash) (string, error) {
 	var res string

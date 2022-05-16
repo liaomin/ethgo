@@ -370,7 +370,6 @@ func (a *Contract) SendByData(method string, opts *TxnOpts, input []byte) (*ethg
 }
 
 func (a *Contract) SendByMethodAndData(m *abi.Method, opts *TxnOpts, input []byte) (*ethgo.Receipt, error) {
-
 	if m == nil {
 		return nil, fmt.Errorf("method not found")
 	}
