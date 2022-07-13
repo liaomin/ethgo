@@ -265,7 +265,8 @@ func (s *stream) SetMaxConnsPerHost(count int) {
 }
 
 type websocketCodec struct {
-	conn *websocket.Conn
+	conn      *websocket.Conn
+	writeLock sync.Mutex
 }
 
 func (w *websocketCodec) Close() error {
@@ -273,6 +274,8 @@ func (w *websocketCodec) Close() error {
 }
 
 func (w *websocketCodec) Write(b []byte) error {
+	w.writeLock.Lock()
+	defer w.writeLock.Unlock()
 	return w.conn.WriteMessage(websocket.TextMessage, b)
 }
 
