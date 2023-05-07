@@ -54,8 +54,13 @@ func NewClient(addr string, opts ...ConfigOption) (*Client, error) {
 
 // Close closes the transport
 func (c *Client) Close() error {
-	// return c.transport.Close()
-	return nil
+
+	return c.transport.Close()
+	// return nil
+}
+
+func (c *Client) IsClosed() bool {
+	return c.transport.IsClosed()
 }
 
 // Call makes a jsonrpc call

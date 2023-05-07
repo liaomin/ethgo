@@ -75,6 +75,10 @@ func (s *stream) incSeq() uint64 {
 	return atomic.AddUint64(&s.seq, 1)
 }
 
+func (s *stream) IsClosed() bool {
+	return s.isClosed()
+}
+
 func (s *stream) isClosed() bool {
 	select {
 	case <-s.closeCh:

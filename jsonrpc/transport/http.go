@@ -27,6 +27,10 @@ func (h *HTTP) Close() error {
 	return nil
 }
 
+func (h *HTTP) IsClosed() bool {
+	return false
+}
+
 // Call implements the transport interface
 func (h *HTTP) Call(method string, out interface{}, params ...interface{}) error {
 	// Encode json-rpc request
