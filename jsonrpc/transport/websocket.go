@@ -21,10 +21,17 @@ func newWebsocket(url string, headers map[string]string) (Transport, error) {
 	if err != nil {
 		return nil, err
 	}
-	codec := &websocketCodec{
+	websocketCodec := websocketCodec{
 		conn: wsConn,
 	}
-	return newStream(codec)
+	codec := &websocketCodec
+	s, e := newStream(codec)
+	wsConn.SetCloseHandler(func(code int, text string) error {
+		fmt.Printf("socket closed code:%d,text : %s", code, text)
+		close(s.closeCh)
+		return nil
+	})
+	return s, e
 }
 
 // ErrTimeout happens when the websocket requests times out
