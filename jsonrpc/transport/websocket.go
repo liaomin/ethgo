@@ -28,7 +28,7 @@ func newWebsocket(url string, headers map[string]string) (Transport, error) {
 	s, e := newStream(codec)
 	wsConn.SetCloseHandler(func(code int, text string) error {
 		fmt.Printf("socket closed code:%d,text : %s", code, text)
-		close(s.closeCh)
+		s.closed = true
 		return nil
 	})
 	return s, e
@@ -45,8 +45,9 @@ type ackMessage struct {
 type callback func(b []byte, err error)
 
 type stream struct {
-	seq   uint64
-	codec Codec
+	seq    uint64
+	closed bool
+	codec  Codec
 
 	// call handlers
 	handlerLock sync.Mutex
@@ -56,14 +57,12 @@ type stream struct {
 	subsLock sync.Mutex
 	subs     map[string]func(b []byte)
 
-	closeCh chan struct{}
-	timer   *time.Timer
+	timer *time.Timer
 }
 
 func newStream(codec Codec) (*stream, error) {
 	w := &stream{
 		codec:   codec,
-		closeCh: make(chan struct{}),
 		handler: map[uint64]callback{},
 		subs:    map[string]func(b []byte){},
 	}
@@ -74,7 +73,7 @@ func newStream(codec Codec) (*stream, error) {
 
 // Close implements the the transport interface
 func (s *stream) Close() error {
-	close(s.closeCh)
+	s.closed = true
 	return s.codec.Close()
 }
 
@@ -87,12 +86,7 @@ func (s *stream) IsClosed() bool {
 }
 
 func (s *stream) isClosed() bool {
-	select {
-	case <-s.closeCh:
-		return true
-	default:
-		return false
-	}
+	return s.closed
 }
 
 func (s *stream) listen() {
@@ -100,6 +94,7 @@ func (s *stream) listen() {
 
 	for {
 		var err error
+		s.closed = false
 		buf, err = s.codec.Read(buf[:0])
 		if err != nil {
 			if !s.isClosed() {
