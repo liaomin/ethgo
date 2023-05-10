@@ -382,7 +382,7 @@ func NewSubscriptionBlockTracker(logger *log.Logger, client *jsonrpc.Client) (*S
 // Track implements the BlockTracker interface
 func (s *SubscriptionBlockTracker) Track(ctx context.Context, handle func(block *ethgo.Block) error) error {
 	data := make(chan []byte)
-	cancel, err := s.client.Subscribe("newHeads", func(b []byte) {
+	cancel, err := s.client.Subscribe("newHeads", nil, func(b []byte) {
 		data <- b
 	})
 	if err != nil {

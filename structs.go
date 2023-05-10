@@ -176,18 +176,17 @@ type Transaction struct {
 	Type TransactionType
 
 	// legacy values
-	Hash       Hash
-	HashString string
-	From       Address
-	To         *Address
-	Input      []byte
-	GasPrice   uint64
-	Gas        uint64
-	Value      *big.Int
-	Nonce      uint64
-	V          []byte
-	R          []byte
-	S          []byte
+	Hash     Hash
+	From     Address
+	To       *Address
+	Input    []byte
+	GasPrice uint64
+	Gas      uint64
+	Value    *big.Int
+	Nonce    uint64
+	V        []byte
+	R        []byte
+	S        []byte
 
 	// jsonrpc values
 	BlockHash   Hash
