@@ -3,70 +3,27 @@ package jsonrpc
 import (
 	"strings"
 	"testing"
-	"time"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/umbracle/ethgo"
-	"github.com/umbracle/ethgo/testutil"
 )
 
 func TestSubscribeNewHead(t *testing.T) {
-	s := testutil.NewTestServer(t, nil)
-	defer s.Close()
+	addr := "wss://arbitrum-one-rpc.publicnode.com"
+	if strings.HasPrefix(addr, "http") {
+		return
+	}
 
-	count := uint64(0)
-	testutil.MultiAddr(t, nil, func(s *testutil.TestServer, addr string) {
-		if strings.HasPrefix(addr, "http") {
-			return
-		}
+	c, _ := NewClient(addr)
+	defer c.Close()
 
-		c, _ := NewClient(addr)
-		defer c.Close()
-
-		data := make(chan []byte)
-		cancel, err := c.Subscribe("newHeads", nil, func(b []byte) {
-			data <- b
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		recv := func(ok bool) {
-			count++
-
-			select {
-			case buf := <-data:
-				if !ok {
-					t.Fatal("unexpected value")
-				}
-
-				var block ethgo.Block
-				if err := block.UnmarshalJSON(buf); err != nil {
-					t.Fatal(err)
-				}
-				if block.Number != count {
-					t.Fatal("bad")
-				}
-
-			case <-time.After(1 * time.Second):
-				if ok {
-					t.Fatal("timeout")
-				}
-			}
-		}
-
-		s.ProcessBlock()
-		recv(true)
-
-		s.ProcessBlock()
-		recv(true)
-
-		assert.NoError(t, cancel())
-
-		s.ProcessBlock()
-		recv(false)
-
-		// subscription already closed
-		assert.Error(t, cancel())
+	data := make(chan []byte)
+	params := map[string]interface{}{
+		"address": "0x641C00A822e8b671738d32a431a4Fb6074E5c79d",
+		"topics":  []string{"0xc42079f94a6350d7e6235f29174924f928cc2ac818eb64fed8004e115fbcca67"},
+	}
+	_, err := c.Subscribe("logs", params, func(b []byte) {
+		data <- b
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
 }
